@@ -1,0 +1,36 @@
+name: Publicar jogos do CIC
+on:
+  push:
+    branches: [main]
+    paths: ['cic-paginas-jogaveis.zip']
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: cic-pages
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.publish.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Preparar páginas dos três jogos
+        run: |
+          mkdir -p _site
+          unzip -q cic-paginas-jogaveis.zip -d _site
+          for page in index.html atlas/index.html rio-em-dados/index.html crescimento/index.html; do
+            test -s "_site/$page"
+          done
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: publish
+        uses: actions/deploy-pages@v4
